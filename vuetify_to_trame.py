@@ -129,10 +129,12 @@ class TrameCodeBuilder:
 
             if has_children:
                 self.trame_code.append(
-                    f"{indentation}with {trame_tag}({attribute_string}):"
+                    f"{indentation}with v3.{trame_tag}({attribute_string}):"
                 )
             else:
-                self.trame_code.append(f"{indentation}{trame_tag}({attribute_string})")
+                self.trame_code.append(
+                    f"{indentation}v3.{trame_tag}({attribute_string})"
+                )
 
             for child in element.children:
                 if isinstance(child, Tag):
