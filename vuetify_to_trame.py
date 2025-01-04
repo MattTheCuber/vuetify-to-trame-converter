@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup, Comment, NavigableString, Tag, TemplateString
 from trame.app import get_server
 from trame.decorators import TrameApp
 from trame.ui.vuetify3 import VAppLayout
-from trame.widgets import code
+from trame.widgets import client, code, html
 from trame.widgets import vuetify3 as v3
 from trame_server import Server
 
@@ -28,6 +28,8 @@ class App:
 
     def build_ui(self):
         with VAppLayout(self.server, theme="dark"):
+            client.Style("html { overflow: hidden; }")
+
             with v3.VAppBar(elevation=0, color="blue"):
                 v3.VToolbarTitle("Vuetify to Trame Converter")
                 v3.VSpacer()
@@ -40,25 +42,28 @@ class App:
                     hide_details=True,
                 )
 
-            with v3.VMain(style="display: flex"):
-                code.Editor(
-                    value=("vuetify_code", ""),
-                    language="html",
-                    theme="vs-dark",
-                    # https://microsoft.github.io/monaco-editor/docs.html#variables/editor.EditorOptions.html
-                    options=("output_options", {}),
-                    style="flex: 1;",
-                    input=(self.convert_code, "[$event]"),
-                )
-                v3.VDivider(vertical=True, thickness=2, color="black")
-                code.Editor(
-                    value=("trame_code", ""),
-                    language="python",
-                    theme="vs-dark",
-                    # https://microsoft.github.io/monaco-editor/docs.html#variables/editor.EditorOptions.html
-                    options=("output_options", {"readOnly": True}),
-                    style="flex: 1;",
-                )
+            with v3.VMain():
+                with html.Div(
+                    style="flex-grow: 1; display: flex; width: 100%; height: calc(100% - 64px);"
+                ):
+                    code.Editor(
+                        value=("vuetify_code", ""),
+                        language="html",
+                        theme="vs-dark",
+                        # https://microsoft.github.io/monaco-editor/docs.html#variables/editor.EditorOptions.html
+                        options=("output_options", {}),
+                        # style="flex-grow: 1;",
+                        input=(self.convert_code, "[$event]"),
+                    )
+                    v3.VDivider(vertical=True, thickness=2, color="black")
+                    code.Editor(
+                        value=("trame_code", ""),
+                        language="python",
+                        theme="vs-dark",
+                        # https://microsoft.github.io/monaco-editor/docs.html#variables/editor.EditorOptions.html
+                        options=("output_options", {"readOnly": True}),
+                        # style="flex-grow: 1;",
+                    )
 
     def convert_code(self, vuetify_code: str):
         if not isinstance(vuetify_code, str):
