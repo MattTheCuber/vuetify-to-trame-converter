@@ -25,23 +25,28 @@ class App:
             client.Style(
                 '.v-input--horizontal { grid-template-areas: "prepend control append append"; grid-template-rows: auto;'
             )
+            client.Style(".v-field__input { height: 100% !important; }")
             with layout.content:
-                with v3.VContainer(fluid=True, classes="fill-height"):
-                    with v3.VRow(classes="fill-height"):
+                with v3.VContainer(fluid=True, height="100%", style="display: flex;"):
+                    with v3.VRow(style="flex-grow: 1;"):
                         with v3.VCol(cols=6):
                             v3.VTextarea(
                                 label="Vuetify Code",
                                 v_model="vuetify_code",
-                                classes="fill-height",
-                                auto_grow=True,
+                                style="height: 100%;",
+                                rows="calc(100vh / 20px)",
+                                row_height=20,
+                                no_resize=True,
                                 hide_details=True,
                             )
                         with v3.VCol(cols=6):
                             v3.VTextarea(
                                 label="Trame Code",
                                 v_model="trame_code",
-                                classes="fill-height",
-                                auto_grow=True,
+                                style="height: 100%",
+                                rows=20,
+                                row_height=20,
+                                no_resize=True,
                                 hide_details=True,
                                 readonly=True,
                             )

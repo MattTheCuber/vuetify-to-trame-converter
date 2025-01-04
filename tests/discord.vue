@@ -10,10 +10,7 @@
       <v-icon>mdi-triangle</v-icon>
     </v-system-bar>
 
-    <v-navigation-drawer
-      color="grey-lighten-3"
-      rail
-    >
+    <v-navigation-drawer color="grey-lighten-3" rail>
       <v-avatar
         class="d-block text-center mx-auto mt-4"
         color="grey-darken-1"
@@ -32,28 +29,19 @@
     </v-navigation-drawer>
 
     <v-navigation-drawer width="244">
-      <v-sheet
-        color="grey-lighten-5"
-        height="128"
-        width="100%"
-      ></v-sheet>
+      <v-sheet color="grey-lighten-5" height="128" width="100%"></v-sheet>
 
       <v-list>
         <v-list-item
           v-for="n in 5"
           :key="n"
-          :title="`Item ${ n }`"
+          :title="`Item ${n}`"
           link
         ></v-list-item>
       </v-list>
     </v-navigation-drawer>
 
-    <v-app-bar
-      class="px-3"
-      color="grey-lighten-4"
-      height="72"
-      flat
-    >
+    <v-app-bar class="px-3" color="grey-lighten-4" height="72" flat>
       <v-spacer></v-spacer>
 
       <v-responsive max-width="156">
@@ -75,16 +63,13 @@
         <v-list-item
           v-for="n in 5"
           :key="n"
-          :title="`Item ${ n }`"
+          :title="`Item ${n}`"
           link
         ></v-list-item>
       </v-list>
     </v-navigation-drawer>
 
-    <v-footer
-      height="72"
-      app
-    >
+    <v-footer height="72" app>
       <v-text-field
         bg-color="grey-lighten-1"
         class="overflow-hidden"
