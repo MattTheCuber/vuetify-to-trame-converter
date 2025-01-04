@@ -1,4 +1,5 @@
 black
 bs4
 trame
+trame-code
 trame-vuetify

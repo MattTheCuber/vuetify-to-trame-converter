@@ -6,9 +6,9 @@ from typing import Any
 from black import FileMode, format_str
 from bs4 import BeautifulSoup, Comment, NavigableString, Tag, TemplateString
 from trame.app import get_server
-from trame.decorators import TrameApp, change
+from trame.decorators import TrameApp
 from trame.ui.vuetify3 import VAppLayout
-from trame.widgets import client
+from trame.widgets import code
 from trame.widgets import vuetify3 as v3
 from trame_server import Server
 
@@ -19,6 +19,7 @@ class App:
         self.server: Server = get_server()  # type: ignore
         self.state = self.server.state
 
+        self.state.trame__title = "Vuetify to Trame Converter"
         self.state.vuetify_code = ""
         self.state.trame_code = ""
         self.state.line_limit = 80
@@ -27,12 +28,7 @@ class App:
 
     def build_ui(self):
         with VAppLayout(self.server, theme="dark"):
-            client.Style(
-                '.v-input--horizontal { grid-template-areas: "prepend control append append"; grid-template-rows: auto;'
-            )
-            client.Style(".v-field__input { height: 100% !important; }")
-
-            with v3.VAppBar():
+            with v3.VAppBar(elevation=0, color="blue"):
                 v3.VToolbarTitle("Vuetify to Trame Converter")
                 v3.VSpacer()
                 v3.VTextField(
@@ -44,37 +40,33 @@ class App:
                     hide_details=True,
                 )
 
-            with v3.VMain():
-                with v3.VContainer(fluid=True, height="100%", style="display: flex;"):
-                    with v3.VRow(style="flex-grow: 1;"):
-                        with v3.VCol(cols=6):
-                            v3.VTextarea(
-                                label="Vuetify Code",
-                                v_model="vuetify_code",
-                                style="height: 100%;",
-                                rows="calc(100vh / 20px)",
-                                row_height=20,
-                                no_resize=True,
-                                hide_details=True,
-                            )
-                        with v3.VCol(cols=6):
-                            v3.VTextarea(
-                                label="Trame Code",
-                                v_model="trame_code",
-                                style="height: 100%",
-                                rows=20,
-                                row_height=20,
-                                no_resize=True,
-                                hide_details=True,
-                                readonly=True,
-                            )
+            with v3.VMain(style="display: flex"):
+                code.Editor(
+                    value=("vuetify_code", ""),
+                    language="html",
+                    theme="vs-dark",
+                    # https://microsoft.github.io/monaco-editor/docs.html#variables/editor.EditorOptions.html
+                    options=("output_options", {}),
+                    style="flex: 1;",
+                    input=(self.convert_code, "[$event]"),
+                )
+                v3.VDivider(vertical=True, thickness=2, color="black")
+                code.Editor(
+                    value=("trame_code", ""),
+                    language="python",
+                    theme="vs-dark",
+                    # https://microsoft.github.io/monaco-editor/docs.html#variables/editor.EditorOptions.html
+                    options=("output_options", {"readOnly": True}),
+                    style="flex: 1;",
+                )
 
-    @change("vuetify_code")
-    def convert_code(self, **_):
+    def convert_code(self, vuetify_code: str):
+        if not isinstance(vuetify_code, str):
+            return
         if not self.state.line_limit:
             self.state.line_limit = 80
         builder = TrameCodeBuilder(
-            self.state.vuetify_code,  # type: ignore
+            vuetify_code,
             line_limit=self.state.line_limit,  # type: ignore
         )
         builder.build_trame_code()
