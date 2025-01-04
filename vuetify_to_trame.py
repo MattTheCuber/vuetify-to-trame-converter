@@ -63,10 +63,11 @@ class App:
     def convert_code(self, vuetify_code: str):
         if not isinstance(vuetify_code, str):
             return
+        self.state.vuetify_code = vuetify_code
         if not self.state.line_limit:
             self.state.line_limit = 80
         builder = TrameCodeBuilder(
-            vuetify_code,
+            self.state.vuetify_code,
             line_limit=self.state.line_limit,  # type: ignore
         )
         builder.build_trame_code()
