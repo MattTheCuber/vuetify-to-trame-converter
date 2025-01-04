@@ -1,3 +1,3 @@
 # WIP
 
-![demo](docs/image.png)
+![demo](docs/demo.png)
