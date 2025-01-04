@@ -7,7 +7,7 @@ from black import FileMode, format_str
 from bs4 import BeautifulSoup, Comment, NavigableString, Tag, TemplateString
 from trame.app import get_server
 from trame.decorators import TrameApp, change
-from trame.ui.vuetify3 import SinglePageLayout
+from trame.ui.vuetify3 import VAppLayout
 from trame.widgets import client
 from trame.widgets import vuetify3 as v3
 from trame_server import Server
@@ -21,16 +21,30 @@ class App:
 
         self.state.vuetify_code = ""
         self.state.trame_code = ""
+        self.state.line_limit = 80
 
         self.build_ui()
 
     def build_ui(self):
-        with SinglePageLayout(self.server, theme="dark") as layout:
+        with VAppLayout(self.server, theme="dark"):
             client.Style(
                 '.v-input--horizontal { grid-template-areas: "prepend control append append"; grid-template-rows: auto;'
             )
             client.Style(".v-field__input { height: 100% !important; }")
-            with layout.content:
+
+            with v3.VAppBar():
+                v3.VToolbarTitle("Vuetify to Trame Converter")
+                v3.VSpacer()
+                v3.VTextField(
+                    label="Line length limit",
+                    v_model="line_limit",
+                    type="number",
+                    variant="underlined",
+                    style="margin-right: 8px;",
+                    hide_details=True,
+                )
+
+            with v3.VMain():
                 with v3.VContainer(fluid=True, height="100%", style="display: flex;"):
                     with v3.VRow(style="flex-grow: 1;"):
                         with v3.VCol(cols=6):
@@ -57,14 +71,20 @@ class App:
 
     @change("vuetify_code")
     def convert_code(self, **_):
-        builder = TrameCodeBuilder(self.state.vuetify_code)
+        if not self.state.line_limit:
+            self.state.line_limit = 80
+        builder = TrameCodeBuilder(
+            self.state.vuetify_code,  # type: ignore
+            line_limit=self.state.line_limit,  # type: ignore
+        )
         builder.build_trame_code()
         self.state.trame_code = builder.get_trame_code()
 
 
 class TrameCodeBuilder:
-    def __init__(self, vuetify_code):
+    def __init__(self, vuetify_code: str, *, line_limit: int = 80):
         self.vuetify_code = vuetify_code
+        self.line_limit = line_limit
         self.trame_code = []
 
     def generate_attribute_list(self, attrs: dict[str, Any]):
@@ -147,7 +167,7 @@ class TrameCodeBuilder:
 
     def get_trame_code(self):
         raw_code = "\n".join(self.trame_code)
-        return format_str(raw_code, mode=FileMode(line_length=80))
+        return format_str(raw_code, mode=FileMode(line_length=self.line_limit))
 
 
 if __name__ == "__main__":
