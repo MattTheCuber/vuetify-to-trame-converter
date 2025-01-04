@@ -3,7 +3,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from bs4 import BeautifulSoup, NavigableString, Tag, TemplateString
+from black import FileMode, format_str
+from bs4 import BeautifulSoup, Comment, NavigableString, Tag, TemplateString
 from trame.app import get_server
 from trame.decorators import TrameApp, change
 from trame.ui.vuetify3 import SinglePageLayout
@@ -95,7 +96,10 @@ class TrameCodeBuilder:
 
     def build_element(self, element: Tag, indent=0):
         if element.name:
-            has_children = any(element.children)
+            has_children = any(
+                not isinstance(child, (TemplateString, NavigableString))
+                for child in element.children
+            )
             indentation = "    " * indent
 
             trame_tag = re.sub(
@@ -105,7 +109,11 @@ class TrameCodeBuilder:
             )
 
             attribute_list = self.generate_attribute_list(element.attrs)
+            if element.string and element.string.strip():
+                attribute_list.insert(0, f'"{element.string.strip()}"')
             attribute_string = ", ".join(attribute_list)
+            if len(attribute_list) > 3:
+                attribute_string += ","
 
             if has_children:
                 self.trame_code.append(
@@ -117,12 +125,15 @@ class TrameCodeBuilder:
             for child in element.children:
                 if isinstance(child, Tag):
                     self.build_element(child, indent + 1)
-                elif isinstance(child, TemplateString):
-                    self.trame_code.append(f"{indentation}    '{child}'")
+                elif isinstance(child, (TemplateString, NavigableString)):
+                    continue
+                elif isinstance(child, Comment):
+                    if len(child.strip()):
+                        self.trame_code.append(f"{indentation}# {child}")
                 else:
-                    return
-                    # print(isinstance(child, Tag))
-                    # raise ValueError(f"Unknown child element type: {type(element)}")
+                    raise ValueError(
+                        f'Unknown child element type: {type(child)} "{child}"'
+                    )
 
     def build_trame_code(self):
         soup = BeautifulSoup(self.vuetify_code, "html.parser")
@@ -135,7 +146,8 @@ class TrameCodeBuilder:
                 raise ValueError(f"Unknown element type: {type(child)}")
 
     def get_trame_code(self):
-        return "\n".join(self.trame_code)
+        raw_code = "\n".join(self.trame_code)
+        return format_str(raw_code, mode=FileMode(line_length=80))
 
 
 if __name__ == "__main__":
