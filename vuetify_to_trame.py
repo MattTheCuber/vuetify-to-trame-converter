@@ -80,6 +80,8 @@ class App:
 
     @change("link_editors")
     def on_link_change(self, **_):
+        # TODO: For some reason if you unlink views, update the output, then link, this is not working properly.
+        # The state variable is updating client-side, but the editor is not updating.
         self.convert_code(self.vuetify_code)  # type: ignore
 
     def convert_code(self, vuetify_code: str):
@@ -97,13 +99,12 @@ class App:
             line_limit=self.state.line_limit,  # type: ignore
         )
         builder.build_trame_code()
-        with self.state:
-            self.state.trame_code = builder.get_trame_code()
+        self.state.trame_code = builder.get_trame_code()
 
 
 class TrameCodeBuilder:
     def __init__(self, vuetify_code: str, *, line_limit: int = 80):
-        self.vuetify_code = vuetify_code
+        self.vuetify_code = vuetify_code.strip()
         self.line_limit = line_limit
         self.trame_code = []
 
