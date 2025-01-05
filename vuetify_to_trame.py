@@ -6,7 +6,7 @@ from typing import Any
 from black import FileMode, format_str
 from bs4 import BeautifulSoup, Comment, NavigableString, Tag, TemplateString
 from trame.app import get_server
-from trame.decorators import TrameApp, change
+from trame.decorators import TrameApp, change, trigger
 from trame.ui.vuetify3 import VAppLayout
 from trame.widgets import client, code, html
 from trame.widgets import vuetify3 as v3
@@ -21,8 +21,11 @@ class App:
 
         self.server.controller.on_client_connected.add(self.reload)
 
-        self.state.trame__title = "Vuetify to Trame Converter"
         self.vuetify_code = ""
+        self.state.trame__title = "Vuetify to Trame Converter"
+        self.state.snackbar_show = False
+        self.state.snackbar_text = ""
+        self.state.snackbar_color = "green"
         self.state.vuetify_code = ""
         self.state.trame_code = ""
         self.state.link_editors = True
@@ -33,6 +36,14 @@ class App:
     def build_ui(self):
         with VAppLayout(self.server, theme="dark"):
             client.Style("html { overflow: hidden; }")
+            client.Style(".v-snackbar__content { text-align: center; }")
+
+            v3.VSnackbar(
+                v_model="snackbar_show",
+                text=("snackbar_text",),
+                color=("snackbar_color",),
+                timeout=3000,
+            )
 
             with v3.VAppBar(elevation=0, color="blue"):
                 v3.VToolbarTitle("Vuetify to Trame Converter")
@@ -58,14 +69,27 @@ class App:
                         options=("output_options", {}),
                         input=(self.convert_code, "[$event]"),
                     )
-                    with html.Div(style="display: flex; flex-direction: column;"):
-                        v3.VSpacer()
-                        v3.VCheckboxBtn(
-                            v_model=("link_editors",),
-                            false_icon="mdi-link-off",
-                            true_icon="mdi-link",
-                        )
-                        v3.VSpacer()
+                    with html.Div(
+                        style="display: flex; flex-direction: column; justify-content: center;"
+                    ):
+                        with html.Div(
+                            style="display: flex; flex-direction: column; gap: 4px;"
+                        ):
+                            v3.VSpacer()
+                            v3.VCheckboxBtn(
+                                v_model=("link_editors",),
+                                false_icon="mdi-link-off",
+                                true_icon="mdi-link",
+                                tooltip="Auto update Trame code when Vuetify code is changed",  # TODO: fix this
+                            )
+                            v3.VBtn(
+                                icon="mdi-content-copy",
+                                variant="text",
+                                size="small",
+                                tooltip="Copy Trame code to clipboard",
+                                click="window.navigator.clipboard.writeText(trame_code); trame.trigger('copied')",  # TODO: fix this
+                            )
+                            v3.VSpacer()
                     code.Editor(
                         value=("trame_code", ""),
                         language="python",
@@ -83,6 +107,12 @@ class App:
         # TODO: For some reason if you unlink views, update the output, then link, this is not working properly.
         # The state variable is updating client-side, but the editor is not updating.
         self.convert_code(self.vuetify_code)  # type: ignore
+
+    @trigger("copied")
+    def on_copied(self):
+        self.state.snackbar_show = True
+        self.state.snackbar_text = "Copied to clipboard"
+        self.state.snackbar_color = "green"
 
     def convert_code(self, vuetify_code: str):
         self.vuetify_code = vuetify_code
