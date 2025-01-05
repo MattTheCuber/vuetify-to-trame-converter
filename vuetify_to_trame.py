@@ -6,7 +6,7 @@ from typing import Any
 from black import FileMode, format_str
 from bs4 import BeautifulSoup, Comment, NavigableString, Tag, TemplateString
 from trame.app import get_server
-from trame.decorators import TrameApp
+from trame.decorators import TrameApp, change
 from trame.ui.vuetify3 import VAppLayout
 from trame.widgets import client, code, html
 from trame.widgets import vuetify3 as v3
@@ -19,9 +19,13 @@ class App:
         self.server: Server = get_server()  # type: ignore
         self.state = self.server.state
 
+        self.server.controller.on_client_connected.add(self.reload)
+
         self.state.trame__title = "Vuetify to Trame Converter"
+        self.vuetify_code = ""
         self.state.vuetify_code = ""
         self.state.trame_code = ""
+        self.state.link_editors = True
         self.state.line_limit = 80
 
         self.build_ui()
@@ -52,31 +56,49 @@ class App:
                         theme="vs-dark",
                         # https://microsoft.github.io/monaco-editor/docs.html#variables/editor.EditorOptions.html
                         options=("output_options", {}),
-                        # style="flex-grow: 1;",
                         input=(self.convert_code, "[$event]"),
                     )
-                    v3.VDivider(vertical=True, thickness=2, color="black")
+                    with html.Div(style="display: flex; flex-direction: column;"):
+                        v3.VSpacer()
+                        v3.VCheckboxBtn(
+                            v_model=("link_editors",),
+                            false_icon="mdi-link-off",
+                            true_icon="mdi-link",
+                        )
+                        v3.VSpacer()
                     code.Editor(
                         value=("trame_code", ""),
                         language="python",
                         theme="vs-dark",
                         # https://microsoft.github.io/monaco-editor/docs.html#variables/editor.EditorOptions.html
                         options=("output_options", {"readOnly": True}),
-                        # style="flex-grow: 1;",
                     )
 
+    def reload(self):
+        with self.state:
+            self.state.vuetify_code = self.vuetify_code
+
+    @change("link_editors")
+    def on_link_change(self, **_):
+        self.convert_code(self.vuetify_code)  # type: ignore
+
     def convert_code(self, vuetify_code: str):
-        if not isinstance(vuetify_code, str):
+        self.vuetify_code = vuetify_code
+        if not isinstance(self.vuetify_code, str):
             return
-        self.state.vuetify_code = vuetify_code
+        if not self.state.link_editors:
+            return
+
         if not self.state.line_limit:
             self.state.line_limit = 80
+
         builder = TrameCodeBuilder(
-            self.state.vuetify_code,
+            self.vuetify_code,
             line_limit=self.state.line_limit,  # type: ignore
         )
         builder.build_trame_code()
-        self.state.trame_code = builder.get_trame_code()
+        with self.state:
+            self.state.trame_code = builder.get_trame_code()
 
 
 class TrameCodeBuilder:
