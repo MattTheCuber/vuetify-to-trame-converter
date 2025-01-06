@@ -80,14 +80,18 @@ class App:
                                 v_model=("link_editors",),
                                 false_icon="mdi-link-off",
                                 true_icon="mdi-link",
-                                tooltip="Auto update Trame code when Vuetify code is changed",  # TODO: fix this
+                                raw_attrs=[
+                                    "v-tooltip=\"'Auto update Trame code when Vuetify code is changed'\"",
+                                ],
                             )
                             v3.VBtn(
                                 icon="mdi-content-copy",
                                 variant="text",
                                 size="small",
-                                tooltip="Copy Trame code to clipboard",
-                                click="window.navigator.clipboard.writeText(trame_code); trame.trigger('copied')",  # TODO: fix this
+                                raw_attrs=[
+                                    "v-tooltip=\"'Copy Trame code to clipboard'\"",
+                                ],
+                                click="window.navigator.clipboard.writeText(trame_code); trame.trigger('copied')",
                             )
                             v3.VSpacer()
                     code.Editor(
