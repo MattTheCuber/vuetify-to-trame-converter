@@ -19,9 +19,6 @@ class App:
         self.server: Server = get_server()  # type: ignore
         self.state = self.server.state
 
-        self.server.controller.on_client_connected.add(self.reload)
-
-        self.vuetify_code = ""
         self.state.trame__title = "Vuetify to Trame Converter"
         self.state.snackbar_show = False
         self.state.snackbar_text = ""
@@ -62,12 +59,11 @@ class App:
                     style="flex-grow: 1; display: flex; width: 100%; height: calc(100% - 64px);"
                 ):
                     code.Editor(
-                        value=("vuetify_code", ""),
+                        v_model=("vuetify_code",),
                         language="html",
                         theme="vs-dark",
                         # https://microsoft.github.io/monaco-editor/docs.html#variables/editor.EditorOptions.html
                         options=("output_options", {}),
-                        input=(self.convert_code, "[$event]"),
                     )
                     with html.Div(
                         style="display: flex; flex-direction: column; justify-content: center;"
@@ -95,22 +91,12 @@ class App:
                             )
                             v3.VSpacer()
                     code.Editor(
-                        value=("trame_code", ""),
+                        v_model=("trame_code",),
                         language="python",
                         theme="vs-dark",
                         # https://microsoft.github.io/monaco-editor/docs.html#variables/editor.EditorOptions.html
                         options=("output_options", {"readOnly": True}),
                     )
-
-    def reload(self):
-        with self.state:
-            self.state.vuetify_code = self.vuetify_code
-
-    @change("link_editors")
-    def on_link_change(self, **_):
-        # TODO: For some reason if you unlink views, update the output, then link, this is not working properly.
-        # The state variable is updating client-side, but the editor is not updating.
-        self.convert_code(self.vuetify_code)  # type: ignore
 
     @trigger("copied")
     def on_copied(self):
@@ -118,10 +104,8 @@ class App:
         self.state.snackbar_text = "Copied to clipboard"
         self.state.snackbar_color = "green"
 
-    def convert_code(self, vuetify_code: str):
-        self.vuetify_code = vuetify_code
-        if not isinstance(self.vuetify_code, str):
-            return
+    @change("vuetify_code", "link_editors")
+    def convert_code(self, **_):
         if not self.state.link_editors:
             return
 
@@ -129,8 +113,8 @@ class App:
             self.state.line_limit = 80
 
         builder = TrameCodeBuilder(
-            self.vuetify_code,
-            line_limit=self.state.line_limit,  # type: ignore
+            self.state.vuetify_code,  # type: ignore
+            line_limit=self.state.line_limit,
         )
         builder.build_trame_code()
         self.state.trame_code = builder.get_trame_code()
